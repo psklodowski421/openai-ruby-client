@@ -1,9 +1,15 @@
+# frozen_string_literal: true
+
 require 'bundler/setup'
 Bundler.require
 require 'dotenv/load'
 require 'uri'
 require 'json'
 
+# The OpenAI class provides a Ruby interface for making requests to OpenAI's API.
+# It has a single public method generate_text which takes a prompt and generates a text response from OpenAI's API.
+# This method can take additional arguments to control verbosity, spinner display, and colorization.
+# The class handles errors from the API and raises an exception in case of an error.
 class OpenAI
   attr_reader :errors
 
@@ -14,17 +20,17 @@ class OpenAI
   end
 
   def generate_text(prompt, verbose: false, spinner: true, color: true)
-    response_data = request(prompt, spinner: spinner, color: color)
+    response_data = request(prompt, spinner:, color:)
     return handle_errors if errors.any?
 
-    output = format_output(response_data, verbose: verbose, color: color)
+    output = format_output(response_data, verbose:, color:)
     puts output
   end
 
   private
 
   def request(prompt, spinner: true, color: true)
-    uri = URI.parse(ENV["API_ENDPOINT"])
+    uri = URI.parse(ENV['API_ENDPOINT'])
     headers = build_headers
     body = build_body(prompt)
 
@@ -50,7 +56,7 @@ class OpenAI
     {
       'model' => @model,
       'prompt' => prompt,
-      'max_tokens' => ENV["MAX_TOKENS"].to_i,
+      'max_tokens' => ENV['MAX_TOKENS'].to_i,
       'temperature' => 0
     }
   end
@@ -75,16 +81,20 @@ class OpenAI
   def handle_response(response)
     if response.is_a?(Net::HTTPSuccess)
       JSON.parse(response.body)
-    elsif response.is_a?(SocketError)
-      raise StandardError, response.message
     else
-      error = JSON.parse(response.body)['error']
-      error_message = "#{error['message']}"
-      raise StandardError, error_message
+      handle_http_error(response)
     end
   rescue StandardError => e
     errors << e
     nil
+  end
+
+  def handle_http_error(response)
+    raise StandardError, response.message if response.is_a?(SocketError)
+
+    error = JSON.parse(response.body)['error']
+    error_message = error['message'].to_s
+    raise StandardError, error_message
   end
 
   def handle_errors
@@ -93,7 +103,7 @@ class OpenAI
 
   def format_output(response_data, verbose:, color:)
     generated_text = response_data['choices'][0]['text']
-    usage_info = build_usage_info(response_data, verbose: verbose) if verbose
+    usage_info = build_usage_info(response_data, verbose:) if verbose
 
     if color
       pastel = Pastel.new
