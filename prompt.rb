@@ -5,9 +5,6 @@ require 'uri'
 require 'json'
 
 class OpenAI
-  API_ENDPOINT = 'https://api.openai.com/v1/completions'.freeze
-  MAX_TOKENS = 2048
-
   attr_reader :errors
 
   def initialize
@@ -27,7 +24,7 @@ class OpenAI
   private
 
   def request(prompt, spinner: true, color: true)
-    uri = URI.parse(API_ENDPOINT)
+    uri = URI.parse(ENV["API_ENDPOINT"])
     headers = build_headers
     body = build_body(prompt)
 
@@ -53,7 +50,7 @@ class OpenAI
     {
       'model' => @model,
       'prompt' => prompt,
-      'max_tokens' => MAX_TOKENS,
+      'max_tokens' => ENV["MAX_TOKENS"].to_i,
       'temperature' => 0
     }
   end
