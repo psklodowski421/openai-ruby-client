@@ -12,7 +12,7 @@ This is a Ruby client for interacting with the OpenAI API. It provides a simple 
 ## Usage
 
 ```
-ruby prompt "Test"
+ruby prompt.rb "Test"
 ```
 
 ## Contributing
